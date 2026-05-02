@@ -93,3 +93,17 @@ def test_load_highscore_corrupt_file_returns_zero(tmp_path):
     path = tmp_path / "bad.json"
     path.write_text("{not valid json")
     assert load_highscore(path) == 0
+
+
+def test_add_kill_tractor():
+    s = Scoring()
+    s.add_kill("tractor")
+    assert s.score == 400
+    assert s.enemies_killed == 1
+
+
+def test_add_kill_rescue():
+    s = Scoring()
+    s.add_kill("rescue")
+    assert s.score == 800
+    assert s.enemies_killed == 1

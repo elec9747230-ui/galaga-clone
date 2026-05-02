@@ -13,13 +13,15 @@ from entities.enemy import BeeEnemy
 from entities.explosion import Explosion
 from entities.player import Player
 from game import hud
+from game.difficulty import Difficulty
 from game.scoring import Scoring, load_highscore
 
 
 class BonusScene(Scene):
     """Reuses player + bullets but no enemy fire and time-limited."""
 
-    def __init__(self, scoring: Scoring) -> None:
+    def __init__(self, scoring: Scoring, difficulty: Difficulty = Difficulty.NORMAL) -> None:
+        self.difficulty = difficulty
         self.scoring = scoring
         self.player = Player()
         self.players = pygame.sprite.GroupSingle(self.player)
@@ -42,7 +44,7 @@ class BonusScene(Scene):
         self._paused = False
         self._highscore = load_highscore()
         self._spawn()
-        audio.play_music("music_bonus", loop=False)
+        audio.play_music("music_bonus", loop=True)
 
     def _spawn(self) -> None:
         for row in range(settings.FORMATION_ROWS):
@@ -91,7 +93,7 @@ class BonusScene(Scene):
         self.manager.replace(
             TransitionScene(
                 f"STAGE {self.scoring.wave}",
-                lambda: PlayScene(scoring=self.scoring),
+                lambda: PlayScene(scoring=self.scoring, difficulty=self.difficulty),
                 duration=1.5,
             )
         )
