@@ -39,6 +39,7 @@ class BonusScene(Scene):
         self._time = 0.0
         self._initial_count = settings.FORMATION_ROWS * settings.FORMATION_COLS
         self._kills = 0
+        self._paused = False
         self._highscore = load_highscore()
         self._spawn()
         audio.play_music("music_bonus", loop=False)
@@ -50,6 +51,10 @@ class BonusScene(Scene):
                 self.enemies.add(BeeEnemy(row, col, self._formation_phase, entry_delay=delay))
 
     def update(self, dt: float, inp: InputState) -> None:
+        if inp.pause_pressed:
+            self._paused = not self._paused
+        if self._paused:
+            return
         self._time += dt
         self._formation_phase[0] = self._time * (2 * math.pi / 4.0)
 
@@ -100,6 +105,18 @@ class BonusScene(Scene):
         self.player_bullets.draw(self.playfield)
         self.enemies.draw(self.playfield)
         self.explosions.draw(self.playfield)
+        if self._paused:
+            overlay = pygame.Surface(
+                (settings.PLAYFIELD_WIDTH, settings.PLAYFIELD_HEIGHT), pygame.SRCALPHA
+            )
+            overlay.fill((0, 0, 0, 160))
+            self.playfield.blit(overlay, (0, 0))
+            f = pygame.font.SysFont("consolas", 48, bold=True)
+            text = f.render("PAUSED", True, settings.COLOR_WHITE)
+            rect = text.get_rect(
+                center=(settings.PLAYFIELD_WIDTH // 2, settings.PLAYFIELD_HEIGHT // 2)
+            )
+            self.playfield.blit(text, rect)
         surface.blit(self.playfield, (settings.PLAYFIELD_OFFSET_X, settings.PLAYFIELD_OFFSET_Y))
         hud.draw_left(surface, self.scoring, self._highscore)
         hud.draw_right(surface, self.scoring, self._highscore)
