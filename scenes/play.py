@@ -52,7 +52,8 @@ class PlayScene(Scene):
 
     def _apply_wave_difficulty(self) -> None:
         p = self.wave_controller.current_params()
-        self._dive_probability_per_sec = 0.20 + 0.5 * p.dive_probability
+        # Genuine per-second rate (~0.5/s base at wave 1, ~2.0/s near cap)
+        self._dive_probability_per_sec = 0.5 + 30.0 * p.dive_probability
 
     def _spawn_formation(self) -> None:
         from game.wave import WaveType
@@ -100,7 +101,7 @@ class PlayScene(Scene):
             x.update(dt)
 
         in_formation = [e for e in self.enemies if e.is_in_formation()]
-        if in_formation and random.random() < self._dive_probability_per_sec * dt * 60:
+        if in_formation and random.random() < self._dive_probability_per_sec * dt:
             attacker = random.choice(in_formation)
             self._dive_seed_counter += 1
             attacker.start_dive(self.player.pos, self._dive_seed_counter)
