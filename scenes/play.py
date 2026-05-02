@@ -14,6 +14,7 @@ from entities.explosion import Explosion
 from entities.player import Player
 from game import hud
 from game.scoring import Scoring, load_highscore
+from game.wave import WaveController
 
 
 class PlayScene(Scene):
@@ -41,7 +42,13 @@ class PlayScene(Scene):
         self._respawn_timer = 0.0
         self._player_alive = True
         self._highscore = load_highscore()
+        self.wave_controller = WaveController(start_wave=self.scoring.wave)
+        self._apply_wave_difficulty()
         self._spawn_formation()
+
+    def _apply_wave_difficulty(self) -> None:
+        p = self.wave_controller.current_params()
+        self._dive_probability_per_sec = 0.20 + 0.5 * p.dive_probability
 
     def _spawn_formation(self) -> None:
         for row in range(settings.FORMATION_ROWS):
@@ -91,6 +98,12 @@ class PlayScene(Scene):
                     self.enemy_bullets.add(bullet)
 
         self._handle_collisions()
+
+        if not self.enemies:
+            self.wave_controller.advance()
+            self.scoring.wave = self.wave_controller.current_wave
+            self._apply_wave_difficulty()
+            self._spawn_formation()
 
     def _handle_collisions(self) -> None:
         hits = pygame.sprite.groupcollide(self.player_bullets, self.enemies, True, True)
