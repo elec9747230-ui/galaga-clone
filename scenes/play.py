@@ -128,11 +128,19 @@ class PlayScene(Scene):
         else:
             self._player_alive = False
             self._respawn_timer -= dt
-            if (
+            can_respawn = (
                 self._respawn_timer <= 0
                 and self.scoring.lives > 0
                 and self.capture_mgr.state.mode != CaptureMode.AWAITING_RESCUE
-            ):
+            )
+            # During an active capture, also wait for the captor boss to finish
+            # carrying the ship back to its formation slot.
+            if can_respawn and self.capture_mgr.state.mode == CaptureMode.CAPTURED:
+                can_respawn = any(
+                    e.captured_ship is not None and e.state == EnemyState.IN_FORMATION
+                    for e in self.enemies
+                )
+            if can_respawn:
                 self.player = Player()
                 self.players.add(self.player)
                 self._player_alive = True
@@ -355,8 +363,9 @@ class PlayScene(Scene):
                 other.is_right_half = False
         else:
             self._player_alive = False
-            # Delay respawn so the new ship doesn't appear during the pull-up animation
-            self._respawn_timer = settings.PLAYER_RESPAWN_DELAY + 1.5
+            # Respawn is gated on the captor boss returning to formation
+            # (see update() respawn block); the timer is just a minimum delay.
+            self._respawn_timer = settings.PLAYER_RESPAWN_DELAY
         self.scoring.lose_life()
 
         # Spawn the pull-up animation; on arrival it will attach the ship to the boss.
