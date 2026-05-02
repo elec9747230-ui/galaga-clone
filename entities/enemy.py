@@ -58,7 +58,12 @@ class Enemy(pygame.sprite.Sprite):
         return self.state == EnemyState.IN_FORMATION
 
     def start_dive(self, player_pos: pygame.Vector2, seed: int) -> None:
-        if self.state != EnemyState.IN_FORMATION:
+        # Allow dive from formation OR after a failed tractor attempt.
+        if self.state not in (
+            EnemyState.IN_FORMATION,
+            EnemyState.TRACTOR_ALIGNING,
+            EnemyState.TRACTOR_BEAMING,
+        ):
             return
         self._dive_path = dive.dive_path(self.pos, player_pos, seed)
         self._dive_index = 0
@@ -144,15 +149,17 @@ class Enemy(pygame.sprite.Sprite):
 
     def _update_tractor_aligning(self, dt: float) -> None:
         speed = settings.TRACTOR_BOSS_ALIGN_SPEED
-        diff = self._tractor_target_x - self.pos.x
-        if abs(diff) < 5:
+        target = pygame.Vector2(self._tractor_target_x, settings.TRACTOR_BOSS_ALIGN_TARGET_Y)
+        diff = target - self.pos
+        if diff.length() < 5:
+            self.pos = target
             self.state = EnemyState.TRACTOR_BEAMING
             return
         step = speed * dt
-        if abs(diff) <= step:
-            self.pos.x = self._tractor_target_x
+        if diff.length() <= step:
+            self.pos = target
         else:
-            self.pos.x += step if diff > 0 else -step
+            self.pos += diff.normalize() * step
 
     def _update_returning_with_capture(self, dt: float) -> None:
         target = self._return_target
