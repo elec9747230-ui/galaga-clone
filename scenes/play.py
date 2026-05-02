@@ -139,6 +139,11 @@ class PlayScene(Scene):
         self.players.empty()
         self._player_alive = False
         self._respawn_timer = settings.PLAYER_RESPAWN_DELAY
+        if self.scoring.lives <= 0:
+            from scenes.gameover import GameOverScene
+
+            assert self.manager
+            self.manager.replace(GameOverScene(self.scoring))
 
     def draw(self, surface: pygame.Surface) -> None:
         surface.fill(settings.COLOR_BLACK)
