@@ -11,6 +11,8 @@ _KILL_SCORES = {
     "dive": settings.SCORE_DIVE_KILL,
     "boss": settings.SCORE_BOSS_KILL,
     "bonus": settings.SCORE_BONUS_PER_KILL,
+    "tractor": settings.SCORE_TRACTOR_KILL,
+    "rescue": settings.SCORE_RESCUE_KILL,
 }
 
 
