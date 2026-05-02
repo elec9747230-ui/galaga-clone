@@ -103,7 +103,33 @@ class PlayScene(Scene):
             self.wave_controller.advance()
             self.scoring.wave = self.wave_controller.current_wave
             self._apply_wave_difficulty()
-            self._spawn_formation()
+            next_type = self.wave_controller.current_type()
+            from game.wave import WaveType
+            from scenes.transitions import TransitionScene
+
+            if next_type == WaveType.BONUS:
+                from scenes.bonus import BonusScene
+
+                assert self.manager
+                self.manager.replace(
+                    TransitionScene(
+                        "CHALLENGING STAGE",
+                        lambda: BonusScene(self.scoring),
+                        duration=1.8,
+                    )
+                )
+            else:
+                text = (
+                    f"STAGE {self.scoring.wave}" if next_type == WaveType.NORMAL else "BOSS STAGE"
+                )
+                assert self.manager
+                self.manager.replace(
+                    TransitionScene(
+                        text,
+                        lambda: type(self)(scoring=self.scoring),
+                        duration=1.5,
+                    )
+                )
 
     def _handle_collisions(self) -> None:
         hits = pygame.sprite.groupcollide(self.player_bullets, self.enemies, True, True)
