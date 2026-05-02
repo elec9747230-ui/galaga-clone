@@ -1,0 +1,68 @@
+"""Game-wide constants. No pygame import to keep importable from anywhere."""
+
+# Window
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 720
+FPS = 60
+
+# Playfield (centered in window)
+PLAYFIELD_WIDTH = 540
+PLAYFIELD_HEIGHT = 720
+PLAYFIELD_OFFSET_X = (WINDOW_WIDTH - PLAYFIELD_WIDTH) // 2  # 370
+PLAYFIELD_OFFSET_Y = 0
+
+# Side panels
+SIDE_PANEL_WIDTH = PLAYFIELD_OFFSET_X  # 370
+
+# Colors (RGB)
+COLOR_BLACK = (0, 0, 0)
+COLOR_WHITE = (255, 255, 255)
+COLOR_RED = (220, 40, 40)
+COLOR_YELLOW = (240, 220, 60)
+COLOR_BLUE = (60, 120, 240)
+COLOR_CYAN = (80, 220, 220)
+COLOR_GREEN = (80, 220, 80)
+COLOR_HUD_DIM = (120, 120, 140)
+COLOR_STAR = (180, 180, 200)
+
+# Player
+PLAYER_SPEED = 280  # pixels per second
+PLAYER_BULLET_SPEED = 600
+MAX_PLAYER_BULLETS = 2
+PLAYER_RESPAWN_DELAY = 0.5  # seconds
+PLAYER_START_LIVES = 3
+
+# Enemy
+ENEMY_BASE_SPEED = 80
+ENEMY_BULLET_SPEED = 220
+FORMATION_ROWS = 5
+FORMATION_COLS = 8
+FORMATION_SLOT_WIDTH = 50
+FORMATION_SLOT_HEIGHT = 45
+FORMATION_TOP_MARGIN = 80
+
+# Scoring
+SCORE_NORMAL_KILL = 50
+SCORE_DIVE_KILL = 100
+SCORE_BOSS_KILL = 150
+SCORE_BONUS_PER_KILL = 200
+SCORE_BONUS_PERFECT = 10000
+LIFE_BONUS_PERFECT = 1
+
+# Wave cycle (1-4 normal, 5 boss, 6 bonus)
+WAVE_CYCLE_LENGTH = 6
+
+# Bonus stage
+BONUS_STAGE_DURATION = 30.0  # seconds
+
+# Files
+HIGHSCORE_PATH = "data/highscore.json"
+ASSETS_SPRITES_DIR = "assets/sprites"
+ASSETS_AUDIO_DIR = "assets/audio"
+
+# Key bindings (pygame key constants resolved at use-site to keep this file pygame-free)
+KEY_LEFT = ("LEFT", "a")
+KEY_RIGHT = ("RIGHT", "d")
+KEY_FIRE = ("SPACE",)
+KEY_PAUSE = ("p",)
+KEY_QUIT = ("ESCAPE",)
