@@ -12,7 +12,8 @@ from engine.scene import Scene
 from entities.enemy import BeeEnemy, BossEnemy, ButterflyEnemy
 from entities.explosion import Explosion
 from entities.player import Player
-from game.scoring import Scoring
+from game import hud
+from game.scoring import Scoring, load_highscore
 
 
 class PlayScene(Scene):
@@ -39,6 +40,7 @@ class PlayScene(Scene):
         self._dive_probability_per_sec = 0.25
         self._respawn_timer = 0.0
         self._player_alive = True
+        self._highscore = load_highscore()
         self._spawn_formation()
 
     def _spawn_formation(self) -> None:
@@ -136,3 +138,5 @@ class PlayScene(Scene):
         self.enemy_bullets.draw(self.playfield)
         self.explosions.draw(self.playfield)
         surface.blit(self.playfield, (settings.PLAYFIELD_OFFSET_X, settings.PLAYFIELD_OFFSET_Y))
+        hud.draw_left(surface, self.scoring, self._highscore)
+        hud.draw_right(surface, self.scoring, self._highscore)
