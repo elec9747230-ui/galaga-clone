@@ -1,9 +1,13 @@
-"""Enemy sprite with state machine: ENTERING -> IN_FORMATION -> DIVING -> RETURNING."""
+"""Enemy sprite with state machine: ENTERING -> IN_FORMATION -> DIVING -> RETURNING.
+
+Boss enemies additionally support tractor beam states for the capture mechanic.
+"""
 
 from enum import Enum
 
 import pygame
 
+import settings
 from engine import assets
 from entities.bullet import EnemyBullet
 from game import dive, formation
@@ -14,6 +18,9 @@ class EnemyState(Enum):
     IN_FORMATION = "in_formation"
     DIVING = "diving"
     RETURNING = "returning"
+    TRACTOR_ALIGNING = "tractor_aligning"
+    TRACTOR_BEAMING = "tractor_beaming"
+    RETURNING_WITH_CAPTURE = "returning_with_capture"
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -41,6 +48,9 @@ class Enemy(pygame.sprite.Sprite):
         self._dive_index = 0
         self._dive_seed = 0
         self._dive_fire_armed = True
+        self.captured_ship: pygame.Surface | None = None
+        self._tractor_target_x: float = 0.0
+        self._return_target: pygame.Vector2 = pygame.Vector2(0, 0)
         self.pos = pygame.Vector2(self._entry_path[0])
         self.rect.center = (int(self.pos.x), int(self.pos.y))
 
@@ -56,6 +66,18 @@ class Enemy(pygame.sprite.Sprite):
         self._dive_fire_armed = True
         self.state = EnemyState.DIVING
 
+    def enter_tractor_align(self, player_pos: pygame.Vector2) -> None:
+        if self.state != EnemyState.IN_FORMATION:
+            return
+        self._tractor_target_x = player_pos.x
+        self.state = EnemyState.TRACTOR_ALIGNING
+
+    def attach_captured_ship(self, ship_surface: pygame.Surface) -> None:
+        self.captured_ship = ship_surface
+        slot = formation.slot_position(self.row, self.col, self._phase_ref[0])
+        self._return_target = pygame.Vector2(slot)
+        self.state = EnemyState.RETURNING_WITH_CAPTURE
+
     def update(self, dt: float) -> None:
         if self.state == EnemyState.ENTERING:
             self._update_entering(dt)
@@ -65,6 +87,12 @@ class Enemy(pygame.sprite.Sprite):
             self._update_diving(dt)
         elif self.state == EnemyState.RETURNING:
             self._update_returning(dt)
+        elif self.state == EnemyState.TRACTOR_ALIGNING:
+            self._update_tractor_aligning(dt)
+        elif self.state == EnemyState.TRACTOR_BEAMING:
+            pass  # hold position
+        elif self.state == EnemyState.RETURNING_WITH_CAPTURE:
+            self._update_returning_with_capture(dt)
         self.rect.center = (int(self.pos.x), int(self.pos.y))
 
     def _update_entering(self, dt: float) -> None:
@@ -113,6 +141,26 @@ class Enemy(pygame.sprite.Sprite):
             self.state = EnemyState.IN_FORMATION
             return
         self.pos += direction.normalize() * 220 * dt
+
+    def _update_tractor_aligning(self, dt: float) -> None:
+        speed = settings.TRACTOR_BOSS_ALIGN_SPEED
+        diff = self._tractor_target_x - self.pos.x
+        if abs(diff) < 5:
+            self.state = EnemyState.TRACTOR_BEAMING
+            return
+        step = speed * dt
+        if abs(diff) <= step:
+            self.pos.x = self._tractor_target_x
+        else:
+            self.pos.x += step if diff > 0 else -step
+
+    def _update_returning_with_capture(self, dt: float) -> None:
+        target = self._return_target
+        diff = target - self.pos
+        if diff.length() < 4:
+            self.state = EnemyState.IN_FORMATION
+            return
+        self.pos += diff.normalize() * settings.TRACTOR_RETURN_SPEED * dt
 
     def maybe_fire(
         self, target: pygame.Vector2, speed_multiplier: float = 1.0
