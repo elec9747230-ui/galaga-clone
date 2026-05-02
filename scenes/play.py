@@ -9,6 +9,7 @@ import settings
 from engine import audio
 from engine.input import InputState
 from engine.scene import Scene
+from entities.captured_animation import CapturedAnimation
 from entities.enemy import BeeEnemy, BossEnemy, ButterflyEnemy, EnemyState
 from entities.explosion import Explosion
 from entities.player import Player
@@ -50,6 +51,7 @@ class PlayScene(Scene):
         self.explosions: pygame.sprite.Group = pygame.sprite.Group()
         self.tractor_beams: pygame.sprite.Group = pygame.sprite.Group()
         self.rescuing_ships: pygame.sprite.Group = pygame.sprite.Group()
+        self.captured_animations: pygame.sprite.Group = pygame.sprite.Group()
         self.capture_mgr = CaptureManager()
         if dual:
             self.capture_mgr.state.mode = CaptureMode.DUAL
@@ -75,7 +77,13 @@ class PlayScene(Scene):
         self._spawn_formation()
 
     def on_enter(self) -> None:
+        from game.wave import WaveType
+
         audio.play_music("music_stage_start", loop=False)
+        # Schedule continuous gameplay BGM after the stage-start jingle
+        is_boss = self.wave_controller.current_type() == WaveType.BOSS
+        bgm = "music_boss_stage" if is_boss else "music_gameplay"
+        audio.play_music_after(bgm, delay=1.8, loop=True)
 
     def _apply_wave_difficulty(self) -> None:
         p = self.wave_controller.current_params()
@@ -106,6 +114,7 @@ class PlayScene(Scene):
             self._paused = not self._paused
         if self._paused:
             return
+        audio.tick(dt)
         self._time += dt
         self._formation_phase[0] = self._time * (2 * math.pi / 4.0)
 
@@ -140,6 +149,8 @@ class PlayScene(Scene):
             b.update(dt)
         for r in self.rescuing_ships:
             r.update(dt)
+        for a in self.captured_animations:
+            a.update(dt)
 
         # Dive trigger — roll for tractor beam on bosses
         in_formation = [e for e in self.enemies if e.is_in_formation()]
@@ -196,13 +207,20 @@ class PlayScene(Scene):
             if triggered and captured_player is not None and captured_beam is not None:
                 self._perform_capture(captured_beam, captured_player)
 
-        # Naturally-expired beams: end without capture
+        # Naturally-expired beams. If a capture is in flight (CAPTURED /
+        # AWAITING_RESCUE), keep the beam visible until the pull-up animation
+        # arrives at the boss (the on_capture_animation_arrived callback kills it).
+        capture_in_flight = self.capture_mgr.state.mode in (
+            CaptureMode.CAPTURED,
+            CaptureMode.AWAITING_RESCUE,
+        )
         for beam in list(self.tractor_beams):
-            if beam.expired:
+            if beam.expired and not capture_in_flight:
                 if beam.boss in self.enemies and beam.boss.state == EnemyState.TRACTOR_BEAMING:
                     self._dive_seed_counter += 1
                     beam.boss.start_dive(self.player.pos, self._dive_seed_counter)
                 self.capture_mgr.on_beam_ended()
+                beam.kill()
 
         # Awaiting-rescue timeout
         if self.capture_mgr.update_awaiting_rescue(dt):
@@ -325,8 +343,9 @@ class PlayScene(Scene):
 
     def _perform_capture(self, beam: TractorBeam, captured_player: Player) -> None:
         boss = beam.boss
-        self.explosions.add(Explosion(pygame.Vector2(captured_player.pos)))
+        captured_pos = pygame.Vector2(captured_player.pos)
         was_dual = self.capture_mgr.state.mode == CaptureMode.DUAL
+        # Remove player ship visually (but DO NOT explode -- being captured, not destroyed)
         captured_player.kill()
         if was_dual:
             self.capture_mgr.on_dual_lost()
@@ -336,20 +355,29 @@ class PlayScene(Scene):
                 other.is_right_half = False
         else:
             self._player_alive = False
-            self._respawn_timer = settings.PLAYER_RESPAWN_DELAY
+            # Delay respawn so the new ship doesn't appear during the pull-up animation
+            self._respawn_timer = settings.PLAYER_RESPAWN_DELAY + 1.5
         self.scoring.lose_life()
 
-        from engine import assets as _assets
-
-        base = _assets.sprite("player").copy()
-        dark = pygame.Surface(base.get_size(), pygame.SRCALPHA)
-        dark.fill((0, 0, 0, 120))
-        base.blit(dark, (0, 0))
-
-        boss.attach_captured_ship(base)
-        beam.kill()
-        audio.play_sfx("sfx_player_hit")
+        # Spawn the pull-up animation; on arrival it will attach the ship to the boss.
+        self.captured_animations.add(
+            CapturedAnimation(captured_pos, boss, self._on_capture_animation_arrived)
+        )
+        audio.play_sfx("sfx_tractor_capture")
         self.capture_mgr.on_captured(id(boss), lives_after=self.scoring.lives)
+        # Beam stays visible during the animation so the player sees the pull-up.
+        # It will be killed when the animation arrives at the boss.
+
+    def _on_capture_animation_arrived(
+        self, _anim: CapturedAnimation, ship_surface: pygame.Surface
+    ) -> None:
+        boss = _anim.boss
+        if boss in self.enemies:
+            boss.attach_captured_ship(ship_surface)
+        # Kill any beam still owned by this boss
+        for beam in list(self.tractor_beams):
+            if beam.boss is boss:
+                beam.kill()
 
     def _perform_rescue(self, boss: BossEnemy) -> None:
         self.scoring.add_kill("rescue")
@@ -410,8 +438,10 @@ class PlayScene(Scene):
         self.enemy_bullets.draw(self.playfield)
         self.explosions.draw(self.playfield)
         self.rescuing_ships.draw(self.playfield)
+        # Beams below the pulled ship so the ship is visible riding the beam
         for beam in self.tractor_beams:
             beam.draw(self.playfield)
+        self.captured_animations.draw(self.playfield)
         if self._paused:
             overlay = pygame.Surface(
                 (settings.PLAYFIELD_WIDTH, settings.PLAYFIELD_HEIGHT), pygame.SRCALPHA

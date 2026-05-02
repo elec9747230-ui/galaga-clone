@@ -7,6 +7,7 @@ from engine import assets
 _mixer_ready = False
 _music_channel: pygame.mixer.Channel | None = None
 _current_music: str | None = None
+_pending: tuple[str, bool, float] | None = None  # (name, loop, remaining_seconds)
 
 
 def init() -> None:
@@ -48,12 +49,33 @@ def play_music(name: str, loop: bool = True) -> None:
 
 
 def stop_music() -> None:
-    global _current_music
+    global _current_music, _pending
     if _music_channel is None:
         return
     _music_channel.stop()
     _current_music = None
+    _pending = None
 
 
 def current_music() -> str | None:
     return _current_music
+
+
+def play_music_after(name: str, delay: float, loop: bool = True) -> None:
+    """Schedule a music track to start after `delay` seconds. Cancels any prior schedule."""
+    global _pending
+    _pending = (name, loop, delay)
+
+
+def tick(dt: float) -> None:
+    """Advance scheduler. Call once per frame from the active scene."""
+    global _pending
+    if _pending is None:
+        return
+    name, loop, remaining = _pending
+    remaining -= dt
+    if remaining <= 0:
+        _pending = None
+        play_music(name, loop=loop)
+    else:
+        _pending = (name, loop, remaining)

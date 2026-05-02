@@ -44,7 +44,7 @@ class BonusScene(Scene):
         self._paused = False
         self._highscore = load_highscore()
         self._spawn()
-        audio.play_music("music_bonus", loop=False)
+        audio.play_music("music_bonus", loop=True)
 
     def _spawn(self) -> None:
         for row in range(settings.FORMATION_ROWS):

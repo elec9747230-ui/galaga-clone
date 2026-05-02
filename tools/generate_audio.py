@@ -150,6 +150,12 @@ def sfx_dive() -> None:
     _write_wav("sfx_dive", _envelope(s, attack=0.005, release=0.06))
 
 
+def sfx_tractor_capture() -> None:
+    """Upward sweep for the moment the player ship is captured."""
+    s = _sweep(180, 880, 0.7, volume=0.45)
+    _write_wav("sfx_tractor_capture", _envelope(s, attack=0.005, release=0.12))
+
+
 # ---------- Music (chiptune recreations) ----------
 
 
@@ -229,16 +235,49 @@ def music_game_over() -> None:
     _write_wav("music_game_over", _melody(notes))
 
 
+def music_gameplay() -> None:
+    """Continuous loopable gameplay BGM — bouncy 8-bit ~6 seconds."""
+    notes = [
+        ("C4", 0.18), ("E4", 0.18), ("G4", 0.18), ("C5", 0.18),
+        ("rest", 0.06), ("G4", 0.18), ("E4", 0.18), ("C4", 0.36),
+        ("F4", 0.18), ("A4", 0.18), ("C5", 0.18), ("F5", 0.18),
+        ("rest", 0.06), ("C5", 0.18), ("A4", 0.18), ("F4", 0.36),
+        ("G4", 0.18), ("B4", 0.18), ("D5", 0.18), ("G5", 0.18),
+        ("rest", 0.06), ("D5", 0.18), ("B4", 0.18), ("G4", 0.36),
+        ("C5", 0.18), ("B4", 0.18), ("A4", 0.18), ("G4", 0.18),
+        ("F4", 0.18), ("E4", 0.18), ("D4", 0.18), ("C4", 0.54),
+    ]  # fmt: skip
+    _write_wav("music_gameplay", _melody(notes, volume=0.30))
+
+
+def music_boss_stage() -> None:
+    """Tenser BGM for boss waves — minor key, faster."""
+    notes = [
+        ("C4", 0.12), ("Eb4", 0.12), ("G4", 0.12), ("Bb4", 0.12),
+        ("C5", 0.24), ("Bb4", 0.12), ("G4", 0.12), ("Eb4", 0.24),
+        ("F4", 0.12), ("Ab4", 0.12), ("C5", 0.12), ("Eb5", 0.12),
+        ("F5", 0.24), ("Eb5", 0.12), ("C5", 0.12), ("Ab4", 0.24),
+        ("G4", 0.12), ("Bb4", 0.12), ("D5", 0.12), ("F5", 0.12),
+        ("G5", 0.24), ("F5", 0.12), ("D5", 0.12), ("Bb4", 0.24),
+        ("Eb5", 0.18), ("D5", 0.18), ("C5", 0.18), ("Bb4", 0.18),
+        ("Ab4", 0.18), ("G4", 0.18), ("F4", 0.18), ("Eb4", 0.36),
+    ]  # fmt: skip
+    _write_wav("music_boss_stage", _melody(notes, volume=0.30))
+
+
 def main() -> None:
     sfx_shoot()
     sfx_explode()
     sfx_player_hit()
     sfx_extra_life()
     sfx_dive()
+    sfx_tractor_capture()
     music_intro()
     music_stage_start()
     music_challenging_stage()
     music_game_over()
+    music_gameplay()
+    music_boss_stage()
     print(f"Audio written to {OUT_DIR.resolve()}")
 
 

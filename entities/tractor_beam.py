@@ -31,8 +31,9 @@ class TractorBeam(pygame.sprite.Sprite):
             settings.TRACTOR_BEAM_STRIPE_HEIGHT * 2
         )
         self._update_rect()
-        if self.expired:
-            self.kill()
+        # Do NOT self-kill on expiry; PlayScene drives end-of-beam transitions
+        # so it can decide whether to start a dive vs leave the beam visible
+        # (e.g., during a capture pull-up animation).
 
     def _update_rect(self) -> None:
         bx = self.boss.rect.centerx
