@@ -9,7 +9,7 @@ import settings
 from engine import assets, audio
 from engine.input import InputReader
 from engine.scene import SceneManager
-from scenes.play import PlayScene
+from scenes.title import TitleScene
 
 
 def main() -> int:
@@ -22,7 +22,7 @@ def main() -> int:
     assets.load_all()
 
     manager = SceneManager()
-    manager.replace(PlayScene())
+    manager.replace(TitleScene())
     inp = InputReader()
 
     running = True
