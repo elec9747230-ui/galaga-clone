@@ -280,11 +280,8 @@ class PlayScene(Scene):
         for _bullet, enemies_hit in hits.items():
             for e in enemies_hit:
                 handled = False
-                if (
-                    isinstance(e, BossEnemy)
-                    and e.captured_ship is not None
-                    and e.state == EnemyState.DIVING
-                ):
+                if isinstance(e, BossEnemy) and e.captured_ship is not None:
+                    # Boss carrying captured ship killed -> rescue (any state)
                     self._perform_rescue(e)
                     handled = True
                 elif isinstance(e, BossEnemy) and e.state in (
@@ -299,9 +296,6 @@ class PlayScene(Scene):
                 else:
                     kind = "dive" if e.state == EnemyState.DIVING else e.score_kind
                     self.scoring.add_kill(kind)
-                    if isinstance(e, BossEnemy) and e.captured_ship is not None:
-                        # Captor died not via rescue — captured ship lost
-                        self.capture_mgr.on_captor_destroyed()
                 if not handled:
                     self.explosions.add(Explosion(pygame.Vector2(e.rect.center)))
                     audio.play_sfx("sfx_explode")
