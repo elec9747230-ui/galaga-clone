@@ -51,15 +51,22 @@ class PlayScene(Scene):
         self._dive_probability_per_sec = 0.20 + 0.5 * p.dive_probability
 
     def _spawn_formation(self) -> None:
+        from game.wave import WaveType
+
+        wave_type = self.wave_controller.current_type()
+        is_boss = wave_type == WaveType.BOSS
         for row in range(settings.FORMATION_ROWS):
             for col in range(settings.FORMATION_COLS):
                 delay = (row * 0.25) + (col * 0.05)
-                if row == 0:
-                    cls = BossEnemy
-                elif row == 1:
-                    cls = ButterflyEnemy
+                if is_boss:
+                    cls = BossEnemy if row < 2 else ButterflyEnemy
                 else:
-                    cls = BeeEnemy
+                    if row == 0:
+                        cls = BossEnemy
+                    elif row == 1:
+                        cls = ButterflyEnemy
+                    else:
+                        cls = BeeEnemy
                 self.enemies.add(cls(row, col, self._formation_phase, entry_delay=delay))
 
     def update(self, dt: float, inp: InputState) -> None:
