@@ -1,5 +1,6 @@
-"""Main gameplay scene. Builds up over later tasks."""
+"""Main gameplay scene with player + enemy formation."""
 
+import math
 import random
 
 import pygame
@@ -7,6 +8,7 @@ import pygame
 import settings
 from engine.input import InputState
 from engine.scene import Scene
+from entities.enemy import BeeEnemy, BossEnemy, ButterflyEnemy
 from entities.player import Player
 
 
@@ -27,8 +29,26 @@ class PlayScene(Scene):
             )
             for _ in range(60)
         ]
+        self._formation_phase = [0.0]
+        self._time = 0.0
+        self._spawn_formation()
+
+    def _spawn_formation(self) -> None:
+        for row in range(settings.FORMATION_ROWS):
+            for col in range(settings.FORMATION_COLS):
+                delay = (row * 0.25) + (col * 0.05)
+                if row == 0:
+                    cls = BossEnemy
+                elif row == 1:
+                    cls = ButterflyEnemy
+                else:
+                    cls = BeeEnemy
+                self.enemies.add(cls(row, col, self._formation_phase, entry_delay=delay))
 
     def update(self, dt: float, inp: InputState) -> None:
+        self._time += dt
+        self._formation_phase[0] = self._time * (2 * math.pi / 4.0)
+
         self.player.update(dt, inp, self.player_bullets)
         for b in self.player_bullets:
             b.update(dt)
