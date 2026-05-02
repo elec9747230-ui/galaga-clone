@@ -43,3 +43,9 @@ def test_normal_is_baseline():
     n = config_for(Difficulty.NORMAL)
     assert n.dive_freq_multiplier == 1.0
     assert n.enemy_bullet_speed_multiplier == 1.0
+
+
+def test_tractor_probability_multipliers():
+    assert config_for(Difficulty.EASY).tractor_probability_multiplier == 0.5
+    assert config_for(Difficulty.NORMAL).tractor_probability_multiplier == 1.0
+    assert config_for(Difficulty.HARD).tractor_probability_multiplier == 1.5
