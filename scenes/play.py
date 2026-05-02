@@ -1,4 +1,4 @@
-"""Main gameplay scene with player + enemy formation."""
+"""Main gameplay scene: formation + dives + collisions + explosions + lives."""
 
 import math
 import random
@@ -6,14 +6,18 @@ import random
 import pygame
 
 import settings
+from engine import audio
 from engine.input import InputState
 from engine.scene import Scene
 from entities.enemy import BeeEnemy, BossEnemy, ButterflyEnemy
+from entities.explosion import Explosion
 from entities.player import Player
+from game.scoring import Scoring
 
 
 class PlayScene(Scene):
-    def __init__(self) -> None:
+    def __init__(self, scoring: Scoring | None = None) -> None:
+        self.scoring = scoring or Scoring()
         self.player = Player()
         self.players = pygame.sprite.GroupSingle(self.player)
         self.player_bullets: pygame.sprite.Group = pygame.sprite.Group()
@@ -31,6 +35,10 @@ class PlayScene(Scene):
         ]
         self._formation_phase = [0.0]
         self._time = 0.0
+        self._dive_seed_counter = 1
+        self._dive_probability_per_sec = 0.25
+        self._respawn_timer = 0.0
+        self._player_alive = True
         self._spawn_formation()
 
     def _spawn_formation(self) -> None:
@@ -49,7 +57,15 @@ class PlayScene(Scene):
         self._time += dt
         self._formation_phase[0] = self._time * (2 * math.pi / 4.0)
 
-        self.player.update(dt, inp, self.player_bullets)
+        if self._player_alive:
+            self.player.update(dt, inp, self.player_bullets, on_shot=self.scoring.add_shot)
+        else:
+            self._respawn_timer -= dt
+            if self._respawn_timer <= 0 and self.scoring.lives > 0:
+                self.player = Player()
+                self.players = pygame.sprite.GroupSingle(self.player)
+                self._player_alive = True
+
         for b in self.player_bullets:
             b.update(dt)
         for b in self.enemy_bullets:
@@ -58,6 +74,56 @@ class PlayScene(Scene):
             e.update(dt)
         for x in self.explosions:
             x.update(dt)
+
+        in_formation = [e for e in self.enemies if e.is_in_formation()]
+        if in_formation and random.random() < self._dive_probability_per_sec * dt * 60:
+            attacker = random.choice(in_formation)
+            self._dive_seed_counter += 1
+            attacker.start_dive(self.player.pos, self._dive_seed_counter)
+            audio.play_sfx("sfx_dive")
+
+        for e in list(self.enemies):
+            if hasattr(e, "maybe_fire"):
+                bullet = e.maybe_fire(self.player.pos)
+                if bullet:
+                    self.enemy_bullets.add(bullet)
+
+        self._handle_collisions()
+
+    def _handle_collisions(self) -> None:
+        hits = pygame.sprite.groupcollide(self.player_bullets, self.enemies, True, True)
+        for _bullet, enemies_hit in hits.items():
+            for e in enemies_hit:
+                kind = "dive" if e.state.value == "diving" else e.score_kind
+                self.scoring.add_kill(kind)
+                self.explosions.add(Explosion(pygame.Vector2(e.rect.center)))
+                audio.play_sfx("sfx_explode")
+
+        if not self._player_alive:
+            return
+
+        if pygame.sprite.spritecollide(self.player, self.enemy_bullets, True):
+            self._kill_player()
+            return
+
+        diving_collisions = [
+            e
+            for e in self.enemies
+            if e.state.value == "diving" and self.player.rect.colliderect(e.rect)
+        ]
+        if diving_collisions:
+            for e in diving_collisions:
+                self.explosions.add(Explosion(pygame.Vector2(e.rect.center)))
+                e.kill()
+            self._kill_player()
+
+    def _kill_player(self) -> None:
+        self.explosions.add(Explosion(pygame.Vector2(self.player.pos)))
+        audio.play_sfx("sfx_player_hit")
+        self.scoring.lose_life()
+        self.players.empty()
+        self._player_alive = False
+        self._respawn_timer = settings.PLAYER_RESPAWN_DELAY
 
     def draw(self, surface: pygame.Surface) -> None:
         surface.fill(settings.COLOR_BLACK)
