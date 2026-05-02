@@ -13,13 +13,22 @@ from entities.enemy import BeeEnemy, BossEnemy, ButterflyEnemy
 from entities.explosion import Explosion
 from entities.player import Player
 from game import hud
+from game.difficulty import Difficulty, config_for
 from game.scoring import Scoring, load_highscore
 from game.wave import WaveController
 
 
 class PlayScene(Scene):
-    def __init__(self, scoring: Scoring | None = None) -> None:
-        self.scoring = scoring or Scoring()
+    def __init__(
+        self,
+        scoring: Scoring | None = None,
+        difficulty: Difficulty = Difficulty.NORMAL,
+    ) -> None:
+        self.difficulty = difficulty
+        self._diff_cfg = config_for(difficulty)
+        if scoring is None:
+            scoring = Scoring(lives=self._diff_cfg.starting_lives)
+        self.scoring = scoring
         self.player = Player()
         self.players = pygame.sprite.GroupSingle(self.player)
         self.player_bullets: pygame.sprite.Group = pygame.sprite.Group()
@@ -53,7 +62,8 @@ class PlayScene(Scene):
     def _apply_wave_difficulty(self) -> None:
         p = self.wave_controller.current_params()
         # Genuine per-second rate (~0.5/s base at wave 1, ~2.0/s near cap)
-        self._dive_probability_per_sec = 0.5 + 30.0 * p.dive_probability
+        base_rate = 0.5 + 30.0 * p.dive_probability
+        self._dive_probability_per_sec = base_rate * self._diff_cfg.dive_freq_multiplier
 
     def _spawn_formation(self) -> None:
         from game.wave import WaveType
@@ -109,7 +119,10 @@ class PlayScene(Scene):
 
         for e in list(self.enemies):
             if hasattr(e, "maybe_fire"):
-                bullet = e.maybe_fire(self.player.pos)
+                bullet = e.maybe_fire(
+                    self.player.pos,
+                    speed_multiplier=self._diff_cfg.enemy_bullet_speed_multiplier,
+                )
                 if bullet:
                     self.enemy_bullets.add(bullet)
 
@@ -130,7 +143,7 @@ class PlayScene(Scene):
                 self.manager.replace(
                     TransitionScene(
                         "CHALLENGING STAGE",
-                        lambda: BonusScene(self.scoring),
+                        lambda: BonusScene(self.scoring, self.difficulty),
                         duration=1.8,
                     )
                 )
@@ -142,7 +155,7 @@ class PlayScene(Scene):
                 self.manager.replace(
                     TransitionScene(
                         text,
-                        lambda: type(self)(scoring=self.scoring),
+                        lambda: type(self)(scoring=self.scoring, difficulty=self.difficulty),
                         duration=1.5,
                     )
                 )

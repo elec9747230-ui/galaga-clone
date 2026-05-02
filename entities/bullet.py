@@ -21,7 +21,12 @@ class PlayerBullet(pygame.sprite.Sprite):
 
 
 class EnemyBullet(pygame.sprite.Sprite):
-    def __init__(self, pos: pygame.Vector2, target: pygame.Vector2) -> None:
+    def __init__(
+        self,
+        pos: pygame.Vector2,
+        target: pygame.Vector2,
+        speed_multiplier: float = 1.0,
+    ) -> None:
         super().__init__()
         self.image = assets.sprite("enemy_bullet")
         self.rect = self.image.get_rect(midtop=(int(pos.x), int(pos.y)))
@@ -29,7 +34,7 @@ class EnemyBullet(pygame.sprite.Sprite):
         direction = target - pos
         if direction.length() == 0:
             direction = pygame.Vector2(0, 1)
-        self.velocity = direction.normalize() * settings.ENEMY_BULLET_SPEED
+        self.velocity = direction.normalize() * settings.ENEMY_BULLET_SPEED * speed_multiplier
 
     def update(self, dt: float) -> None:
         self.pos += self.velocity * dt

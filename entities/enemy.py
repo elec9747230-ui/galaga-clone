@@ -114,13 +114,15 @@ class Enemy(pygame.sprite.Sprite):
             return
         self.pos += direction.normalize() * 220 * dt
 
-    def maybe_fire(self, target: pygame.Vector2) -> EnemyBullet | None:
+    def maybe_fire(
+        self, target: pygame.Vector2, speed_multiplier: float = 1.0
+    ) -> EnemyBullet | None:
         if self.state != EnemyState.DIVING or not self._dive_fire_armed:
             return None
         if self._dive_index < 8 or self._dive_index > 16:
             return None
         self._dive_fire_armed = False
-        return EnemyBullet(self.pos, target)
+        return EnemyBullet(self.pos, target, speed_multiplier=speed_multiplier)
 
 
 class BeeEnemy(Enemy):
