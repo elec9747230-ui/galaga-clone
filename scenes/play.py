@@ -47,6 +47,9 @@ class PlayScene(Scene):
         self._apply_wave_difficulty()
         self._spawn_formation()
 
+    def on_enter(self) -> None:
+        audio.play_music("music_stage_start", loop=False)
+
     def _apply_wave_difficulty(self) -> None:
         p = self.wave_controller.current_params()
         self._dive_probability_per_sec = 0.20 + 0.5 * p.dive_probability
