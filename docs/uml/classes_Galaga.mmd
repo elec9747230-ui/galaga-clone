@@ -1,0 +1,240 @@
+classDiagram
+  class BeeEnemy {
+    score_kind : str
+    sprite_name : str
+  }
+  class BonusScene {
+    difficulty
+    enemies
+    explosions
+    player
+    player_bullets
+    players
+    playfield : NoneType
+    scoring
+    draw(surface: pygame.Surface) None
+    update(dt: float, inp: InputState) None
+  }
+  class BossEnemy {
+    score_kind : str
+    sprite_name : str
+  }
+  class ButterflyEnemy {
+    score_kind : str
+    sprite_name : str
+  }
+  class CaptureManager {
+    active_tractor_boss_id : NoneType, int | None
+    state
+    begin_beam(boss_id: int) None
+    can_start_tractor(boss_id: int) bool
+    on_beam_ended() None
+    on_captor_destroyed() None
+    on_captured(boss_id: int, lives_after: int) None
+    on_dual_lost() None
+    on_rescue_complete() None
+    on_rescue_eligible_kill() bool
+    update_awaiting_rescue(dt: float) bool
+    update_beam(dt: float, in_beam: bool) bool
+  }
+  class CaptureMode {
+    name
+  }
+  class CaptureState {
+    beam_grace : float
+    captor_boss_id : int | None
+    mode
+    rescue_timer : float
+  }
+  class CapturedAnimation {
+    SPEED : float
+    boss
+    image
+    pos
+    rect
+    update(dt: float) None
+  }
+  class Difficulty {
+    name
+  }
+  class DifficultyConfig {
+    dive_freq_multiplier : float
+    enemy_bullet_speed_multiplier : float
+    starting_lives : int
+    tractor_probability_multiplier : float
+  }
+  class DifficultyParams {
+    dive_probability : float
+    enemy_bullet_speed : float
+    enemy_speed : float
+  }
+  class Enemy {
+    captured_ship : pygame.Surface | None
+    col : int
+    image
+    pos
+    rect
+    row : int
+    score_kind : str
+    sprite_name : str
+    state : DIVING, ENTERING, IN_FORMATION, RETURNING_WITH_CAPTURE, TRACTOR_ALIGNING, TRACTOR_BEAMING
+    attach_captured_ship(ship_surface: pygame.Surface) None
+    enter_tractor_align(player_pos: pygame.Vector2) None
+    is_in_formation() bool
+    maybe_fire(target: pygame.Vector2, speed_multiplier: float) EnemyBullet | None
+    start_dive(player_pos: pygame.Vector2, seed: int) None
+    update(dt: float) None
+  }
+  class EnemyBullet {
+    image
+    pos
+    rect
+    velocity
+    update(dt: float) None
+  }
+  class EnemyState {
+    name
+  }
+  class Explosion {
+    frames
+    image
+    rect
+    update(dt: float) None
+  }
+  class GameOverScene {
+    is_new_high
+    scoring
+    draw(surface: pygame.Surface) None
+    update(dt: float, inp: InputState) None
+  }
+  class InputReader {
+    state
+    begin_frame(events: list[pygame.event.Event]) None
+  }
+  class InputState {
+    fire : bool
+    fire_pressed : bool
+    left : bool
+    pause_pressed : bool
+    quit_pressed : bool
+    right : bool
+  }
+  class PlayScene {
+    capture_mgr
+    captured_animations
+    difficulty
+    enemies
+    enemy_bullets
+    explosions
+    player
+    player_bullets
+    players
+    playfield : NoneType
+    rescuing_ships
+    scoring : Scoring | None
+    tractor_beams
+    wave_controller
+    draw(surface: pygame.Surface) None
+    on_enter() None
+    update(dt: float, inp: InputState) None
+  }
+  class Player {
+    dual_offset : int
+    image
+    is_left_half : bool
+    is_right_half : bool
+    pos
+    rect
+    update(dt: float, inp: InputState, bullets: pygame.sprite.Group, on_shot: Callable[[], None] | None) None
+  }
+  class PlayerBullet {
+    image
+    pos
+    rect
+    update(dt: float) None
+  }
+  class RescuingShip {
+    image
+    pos
+    rect
+    update(dt: float) None
+  }
+  class Scene {
+    manager : SceneManager | None
+    draw(surface: pygame.Surface)* None
+    handle_event(event: pygame.event.Event)* None
+    on_enter()* None
+    on_exit()* None
+    update(dt: float, inp: InputState)* None
+  }
+  class SceneManager {
+    current : Scene | None
+    draw(surface: pygame.Surface) None
+    handle_event(event: pygame.event.Event) None
+    pop() None
+    push(scene: Scene) None
+    replace(scene: Scene) None
+    update(dt: float, inp: InputState) None
+  }
+  class Scoring {
+    enemies_killed : int
+    hits : int
+    lives : int
+    score : int
+    shots_fired : int
+    wave : int
+    accuracy() float
+    add_kill(kind: str) None
+    add_shot() None
+    gain_life() None
+    lose_life() None
+  }
+  class TitleScene {
+    selected_difficulty : Difficulty
+    draw(surface: pygame.Surface) None
+    on_enter() None
+    on_exit() None
+    update(dt: float, inp: InputState) None
+  }
+  class TractorBeam {
+    boss
+    expired : bool
+    image : NoneType
+    lifetime : float
+    rect
+    contains(point: pygame.Vector2) bool
+    draw(surface: pygame.Surface) None
+    update(dt: float) None
+  }
+  class TransitionScene {
+    text : str
+    draw(surface: pygame.Surface) None
+    update(dt: float, inp: InputState) None
+  }
+  class WaveController {
+    current_wave : int
+    advance() None
+    current_params() DifficultyParams
+    current_type() WaveType
+  }
+  class WaveType {
+    name
+  }
+  BeeEnemy --|> Enemy
+  BossEnemy --|> Enemy
+  ButterflyEnemy --|> Enemy
+  BonusScene --|> Scene
+  GameOverScene --|> Scene
+  PlayScene --|> Scene
+  TitleScene --|> Scene
+  TransitionScene --|> Scene
+  InputState --* InputReader : state
+  Player --* BonusScene : player
+  Player --* PlayScene : player
+  CaptureManager --* PlayScene : capture_mgr
+  CaptureState --* CaptureManager : state
+  WaveController --* PlayScene : wave_controller
+  Difficulty --o BonusScene : difficulty
+  Difficulty --o PlayScene : difficulty
+  Scoring --o BonusScene : scoring
+  Scoring --o GameOverScene : scoring

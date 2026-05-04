@@ -1,6 +1,11 @@
 """HUD rendering for left and right side panels.
 
 Reads from a Scoring instance every frame.
+
+The playfield is flanked by two opaque side panels; this module renders both.
+The left panel shows logo, score, lives, and control hints. The right panel
+shows highscore, current wave, accuracy, and total kills. Fonts are cached by
+pixel size to avoid the surprisingly large cost of `SysFont` lookups per frame.
 """
 
 import pygame
@@ -9,16 +14,34 @@ import settings
 from engine import assets
 from game.scoring import Scoring
 
+# Module-level font cache keyed by pixel size. Pygame's SysFont opens a font
+# file per call; caching keeps the per-frame cost negligible.
 _font_cache: dict[int, pygame.font.Font] = {}
 
 
 def _font(size: int) -> pygame.font.Font:
+    """Return a bold Consolas font of the given size, cached.
+
+    Args:
+        size: Font height in pixels.
+
+    Returns:
+        A `pygame.font.Font` instance reused across frames.
+    """
     if size not in _font_cache:
         _font_cache[size] = pygame.font.SysFont("consolas", size, bold=True)
     return _font_cache[size]
 
 
 def draw_left(surface: pygame.Surface, scoring: Scoring, highscore: int) -> None:
+    """Render the left side panel: logo, score, lives, and control hints.
+
+    Args:
+        surface: The window surface to blit the assembled panel onto.
+        scoring: Live Scoring instance read for `score` and `lives`.
+        highscore: Persistent best score (currently unused on the left panel
+            but kept in the signature for symmetry with `draw_right`).
+    """
     panel = pygame.Surface((settings.SIDE_PANEL_WIDTH, settings.WINDOW_HEIGHT))
     panel.fill(settings.COLOR_BLACK)
 
@@ -33,6 +56,7 @@ def draw_left(surface: pygame.Surface, scoring: Scoring, highscore: int) -> None
     lives_label = _font(18).render("LIVES", True, settings.COLOR_HUD_DIM)
     panel.blit(lives_label, (40, 360))
     ship = assets.sprite("player")
+    # Render one ship icon per remaining life; spacing = sprite width + 6 px.
     for i in range(scoring.lives):
         panel.blit(ship, (40 + i * (ship.get_width() + 6), 388))
 
@@ -50,6 +74,13 @@ def draw_left(surface: pygame.Surface, scoring: Scoring, highscore: int) -> None
 
 
 def draw_right(surface: pygame.Surface, scoring: Scoring, highscore: int) -> None:
+    """Render the right side panel: highscore, wave, accuracy, kills.
+
+    Args:
+        surface: The window surface to blit the panel onto.
+        scoring: Live Scoring instance read for wave, accuracy, kills.
+        highscore: Persistent best score loaded from disk.
+    """
     panel = pygame.Surface((settings.SIDE_PANEL_WIDTH, settings.WINDOW_HEIGHT))
     panel.fill(settings.COLOR_BLACK)
 
@@ -65,6 +96,8 @@ def draw_right(surface: pygame.Surface, scoring: Scoring, highscore: int) -> Non
 
     acc_label = _font(18).render("ACCURACY", True, settings.COLOR_HUD_DIM)
     panel.blit(acc_label, (40, 400))
+    # Accuracy is hits/shots clamped at 0 when no shots have been fired
+    # (see Scoring.accuracy); multiply by 100 to display as a percentage.
     pct = scoring.accuracy() * 100
     acc_val = _font(28).render(f"{pct:5.1f}%", True, settings.COLOR_GREEN)
     panel.blit(acc_val, (40, 426))
@@ -74,4 +107,5 @@ def draw_right(surface: pygame.Surface, scoring: Scoring, highscore: int) -> Non
     k_val = _font(28).render(f"{scoring.enemies_killed:>5}", True, settings.COLOR_WHITE)
     panel.blit(k_val, (40, 566))
 
+    # Right panel sits flush against the right edge of the playfield.
     surface.blit(panel, (settings.PLAYFIELD_OFFSET_X + settings.PLAYFIELD_WIDTH, 0))

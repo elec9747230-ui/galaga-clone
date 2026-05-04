@@ -1,0 +1,124 @@
+classDiagram
+  class engine {
+  }
+  class assets {
+  }
+  class audio {
+  }
+  class input {
+  }
+  class scene {
+  }
+  class entities {
+  }
+  class bullet {
+  }
+  class captured_animation {
+  }
+  class enemy {
+  }
+  class explosion {
+  }
+  class player {
+  }
+  class rescuing_ship {
+  }
+  class tractor_beam {
+  }
+  class game {
+  }
+  class capture {
+  }
+  class difficulty {
+  }
+  class dive {
+  }
+  class formation {
+  }
+  class hud {
+  }
+  class scoring {
+  }
+  class wave {
+  }
+  class scenes {
+  }
+  class bonus {
+  }
+  class gameover {
+  }
+  class play {
+  }
+  class title {
+  }
+  class transitions {
+  }
+  audio --> engine
+  audio --> assets
+  bullet --> engine
+  bullet --> assets
+  captured_animation --> engine
+  captured_animation --> assets
+  enemy --> engine
+  enemy --> assets
+  enemy --> bullet
+  enemy --> game
+  explosion --> engine
+  explosion --> assets
+  player --> engine
+  player --> assets
+  player --> audio
+  player --> input
+  player --> bullet
+  rescuing_ship --> engine
+  rescuing_ship --> assets
+  hud --> engine
+  hud --> assets
+  hud --> scoring
+  bonus --> engine
+  bonus --> audio
+  bonus --> input
+  bonus --> scene
+  bonus --> enemy
+  bonus --> explosion
+  bonus --> player
+  bonus --> game
+  bonus --> difficulty
+  bonus --> scoring
+  bonus --> play
+  bonus --> transitions
+  gameover --> engine
+  gameover --> audio
+  gameover --> input
+  gameover --> scene
+  gameover --> scoring
+  gameover --> title
+  play --> engine
+  play --> audio
+  play --> input
+  play --> scene
+  play --> captured_animation
+  play --> enemy
+  play --> explosion
+  play --> player
+  play --> rescuing_ship
+  play --> tractor_beam
+  play --> game
+  play --> capture
+  play --> difficulty
+  play --> scoring
+  play --> wave
+  play --> bonus
+  play --> gameover
+  play --> transitions
+  title --> engine
+  title --> audio
+  title --> input
+  title --> scene
+  title --> difficulty
+  title --> scoring
+  title --> play
+  title --> transitions
+  transitions --> input
+  transitions --> scene
+  scene ..> input

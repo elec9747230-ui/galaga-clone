@@ -1,0 +1,126 @@
+@startuml packages_Galaga
+set namespaceSeparator none
+package "engine" as engine {
+}
+package "engine.assets" as engine.assets {
+}
+package "engine.audio" as engine.audio {
+}
+package "engine.input" as engine.input {
+}
+package "engine.scene" as engine.scene {
+}
+package "entities" as entities {
+}
+package "entities.bullet" as entities.bullet {
+}
+package "entities.captured_animation" as entities.captured_animation {
+}
+package "entities.enemy" as entities.enemy {
+}
+package "entities.explosion" as entities.explosion {
+}
+package "entities.player" as entities.player {
+}
+package "entities.rescuing_ship" as entities.rescuing_ship {
+}
+package "entities.tractor_beam" as entities.tractor_beam {
+}
+package "game" as game {
+}
+package "game.capture" as game.capture {
+}
+package "game.difficulty" as game.difficulty {
+}
+package "game.dive" as game.dive {
+}
+package "game.formation" as game.formation {
+}
+package "game.hud" as game.hud {
+}
+package "game.scoring" as game.scoring {
+}
+package "game.wave" as game.wave {
+}
+package "scenes" as scenes {
+}
+package "scenes.bonus" as scenes.bonus {
+}
+package "scenes.gameover" as scenes.gameover {
+}
+package "scenes.play" as scenes.play {
+}
+package "scenes.title" as scenes.title {
+}
+package "scenes.transitions" as scenes.transitions {
+}
+engine.audio --> engine
+engine.audio --> engine.assets
+entities.bullet --> engine
+entities.bullet --> engine.assets
+entities.captured_animation --> engine
+entities.captured_animation --> engine.assets
+entities.enemy --> engine
+entities.enemy --> engine.assets
+entities.enemy --> entities.bullet
+entities.enemy --> game
+entities.explosion --> engine
+entities.explosion --> engine.assets
+entities.player --> engine
+entities.player --> engine.assets
+entities.player --> engine.audio
+entities.player --> engine.input
+entities.player --> entities.bullet
+entities.rescuing_ship --> engine
+entities.rescuing_ship --> engine.assets
+game.hud --> engine
+game.hud --> engine.assets
+game.hud --> game.scoring
+scenes.bonus --> engine
+scenes.bonus --> engine.audio
+scenes.bonus --> engine.input
+scenes.bonus --> engine.scene
+scenes.bonus --> entities.enemy
+scenes.bonus --> entities.explosion
+scenes.bonus --> entities.player
+scenes.bonus --> game
+scenes.bonus --> game.difficulty
+scenes.bonus --> game.scoring
+scenes.bonus --> scenes.play
+scenes.bonus --> scenes.transitions
+scenes.gameover --> engine
+scenes.gameover --> engine.audio
+scenes.gameover --> engine.input
+scenes.gameover --> engine.scene
+scenes.gameover --> game.scoring
+scenes.gameover --> scenes.title
+scenes.play --> engine
+scenes.play --> engine.audio
+scenes.play --> engine.input
+scenes.play --> engine.scene
+scenes.play --> entities.captured_animation
+scenes.play --> entities.enemy
+scenes.play --> entities.explosion
+scenes.play --> entities.player
+scenes.play --> entities.rescuing_ship
+scenes.play --> entities.tractor_beam
+scenes.play --> game
+scenes.play --> game.capture
+scenes.play --> game.difficulty
+scenes.play --> game.scoring
+scenes.play --> game.wave
+scenes.play --> scenes.bonus
+scenes.play --> scenes.gameover
+scenes.play --> scenes.transitions
+scenes.title --> engine
+scenes.title --> engine.audio
+scenes.title --> engine.input
+scenes.title --> engine.scene
+scenes.title --> game.difficulty
+scenes.title --> game.scoring
+scenes.title --> scenes.play
+scenes.title --> scenes.transitions
+scenes.transitions --> engine.input
+scenes.transitions --> engine.scene
+engine.scene ..> engine.input
+@enduml

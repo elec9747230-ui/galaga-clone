@@ -1,0 +1,242 @@
+@startuml classes_Galaga
+set namespaceSeparator none
+class "BeeEnemy" as entities.enemy.BeeEnemy {
+  score_kind : str
+  sprite_name : str
+}
+class "BonusScene" as scenes.bonus.BonusScene {
+  difficulty
+  enemies
+  explosions
+  player
+  player_bullets
+  players
+  playfield : NoneType
+  scoring
+  draw(surface: pygame.Surface) -> None
+  update(dt: float, inp: InputState) -> None
+}
+class "BossEnemy" as entities.enemy.BossEnemy {
+  score_kind : str
+  sprite_name : str
+}
+class "ButterflyEnemy" as entities.enemy.ButterflyEnemy {
+  score_kind : str
+  sprite_name : str
+}
+class "CaptureManager" as game.capture.CaptureManager {
+  active_tractor_boss_id : NoneType, int | None
+  state
+  begin_beam(boss_id: int) -> None
+  can_start_tractor(boss_id: int) -> bool
+  on_beam_ended() -> None
+  on_captor_destroyed() -> None
+  on_captured(boss_id: int, lives_after: int) -> None
+  on_dual_lost() -> None
+  on_rescue_complete() -> None
+  on_rescue_eligible_kill() -> bool
+  update_awaiting_rescue(dt: float) -> bool
+  update_beam(dt: float, in_beam: bool) -> bool
+}
+class "CaptureMode" as game.capture.CaptureMode {
+  name
+}
+class "CaptureState" as game.capture.CaptureState {
+  beam_grace : float
+  captor_boss_id : int | None
+  mode
+  rescue_timer : float
+}
+class "CapturedAnimation" as entities.captured_animation.CapturedAnimation {
+  SPEED : float
+  boss
+  image
+  pos
+  rect
+  update(dt: float) -> None
+}
+class "Difficulty" as game.difficulty.Difficulty {
+  name
+}
+class "DifficultyConfig" as game.difficulty.DifficultyConfig {
+  dive_freq_multiplier : float
+  enemy_bullet_speed_multiplier : float
+  starting_lives : int
+  tractor_probability_multiplier : float
+}
+class "DifficultyParams" as game.wave.DifficultyParams {
+  dive_probability : float
+  enemy_bullet_speed : float
+  enemy_speed : float
+}
+class "Enemy" as entities.enemy.Enemy {
+  captured_ship : pygame.Surface | None
+  col : int
+  image
+  pos
+  rect
+  row : int
+  score_kind : str
+  sprite_name : str
+  state : DIVING, ENTERING, IN_FORMATION, RETURNING_WITH_CAPTURE, TRACTOR_ALIGNING, TRACTOR_BEAMING
+  attach_captured_ship(ship_surface: pygame.Surface) -> None
+  enter_tractor_align(player_pos: pygame.Vector2) -> None
+  is_in_formation() -> bool
+  maybe_fire(target: pygame.Vector2, speed_multiplier: float) -> EnemyBullet | None
+  start_dive(player_pos: pygame.Vector2, seed: int) -> None
+  update(dt: float) -> None
+}
+class "EnemyBullet" as entities.bullet.EnemyBullet {
+  image
+  pos
+  rect
+  velocity
+  update(dt: float) -> None
+}
+class "EnemyState" as entities.enemy.EnemyState {
+  name
+}
+class "Explosion" as entities.explosion.Explosion {
+  frames
+  image
+  rect
+  update(dt: float) -> None
+}
+class "GameOverScene" as scenes.gameover.GameOverScene {
+  is_new_high
+  scoring
+  draw(surface: pygame.Surface) -> None
+  update(dt: float, inp: InputState) -> None
+}
+class "InputReader" as engine.input.InputReader {
+  state
+  begin_frame(events: list[pygame.event.Event]) -> None
+}
+class "InputState" as engine.input.InputState {
+  fire : bool
+  fire_pressed : bool
+  left : bool
+  pause_pressed : bool
+  quit_pressed : bool
+  right : bool
+}
+class "PlayScene" as scenes.play.PlayScene {
+  capture_mgr
+  captured_animations
+  difficulty
+  enemies
+  enemy_bullets
+  explosions
+  player
+  player_bullets
+  players
+  playfield : NoneType
+  rescuing_ships
+  scoring : Scoring | None
+  tractor_beams
+  wave_controller
+  draw(surface: pygame.Surface) -> None
+  on_enter() -> None
+  update(dt: float, inp: InputState) -> None
+}
+class "Player" as entities.player.Player {
+  dual_offset : int
+  image
+  is_left_half : bool
+  is_right_half : bool
+  pos
+  rect
+  update(dt: float, inp: InputState, bullets: pygame.sprite.Group, on_shot: Callable[[], None] | None) -> None
+}
+class "PlayerBullet" as entities.bullet.PlayerBullet {
+  image
+  pos
+  rect
+  update(dt: float) -> None
+}
+class "RescuingShip" as entities.rescuing_ship.RescuingShip {
+  image
+  pos
+  rect
+  update(dt: float) -> None
+}
+class "Scene" as engine.scene.Scene {
+  manager : SceneManager | None
+  {abstract}draw(surface: pygame.Surface) -> None
+  {abstract}handle_event(event: pygame.event.Event) -> None
+  {abstract}on_enter() -> None
+  {abstract}on_exit() -> None
+  {abstract}update(dt: float, inp: InputState) -> None
+}
+class "SceneManager" as engine.scene.SceneManager {
+  current : Scene | None
+  draw(surface: pygame.Surface) -> None
+  handle_event(event: pygame.event.Event) -> None
+  pop() -> None
+  push(scene: Scene) -> None
+  replace(scene: Scene) -> None
+  update(dt: float, inp: InputState) -> None
+}
+class "Scoring" as game.scoring.Scoring {
+  enemies_killed : int
+  hits : int
+  lives : int
+  score : int
+  shots_fired : int
+  wave : int
+  accuracy() -> float
+  add_kill(kind: str) -> None
+  add_shot() -> None
+  gain_life() -> None
+  lose_life() -> None
+}
+class "TitleScene" as scenes.title.TitleScene {
+  selected_difficulty : Difficulty
+  draw(surface: pygame.Surface) -> None
+  on_enter() -> None
+  on_exit() -> None
+  update(dt: float, inp: InputState) -> None
+}
+class "TractorBeam" as entities.tractor_beam.TractorBeam {
+  boss
+  expired : bool
+  image : NoneType
+  lifetime : float
+  rect
+  contains(point: pygame.Vector2) -> bool
+  draw(surface: pygame.Surface) -> None
+  update(dt: float) -> None
+}
+class "TransitionScene" as scenes.transitions.TransitionScene {
+  text : str
+  draw(surface: pygame.Surface) -> None
+  update(dt: float, inp: InputState) -> None
+}
+class "WaveController" as game.wave.WaveController {
+  current_wave : int
+  advance() -> None
+  current_params() -> DifficultyParams
+  current_type() -> WaveType
+}
+class "WaveType" as game.wave.WaveType {
+  name
+}
+entities.enemy.BeeEnemy --|> entities.enemy.Enemy
+entities.enemy.BossEnemy --|> entities.enemy.Enemy
+entities.enemy.ButterflyEnemy --|> entities.enemy.Enemy
+scenes.bonus.BonusScene --|> engine.scene.Scene
+scenes.gameover.GameOverScene --|> engine.scene.Scene
+scenes.play.PlayScene --|> engine.scene.Scene
+scenes.title.TitleScene --|> engine.scene.Scene
+scenes.transitions.TransitionScene --|> engine.scene.Scene
+engine.input.InputState --* engine.input.InputReader : state
+entities.player.Player --* scenes.bonus.BonusScene : player
+entities.player.Player --* scenes.play.PlayScene : player
+game.capture.CaptureManager --* scenes.play.PlayScene : capture_mgr
+game.capture.CaptureState --* game.capture.CaptureManager : state
+game.wave.WaveController --* scenes.play.PlayScene : wave_controller
+game.difficulty.Difficulty --o scenes.bonus.BonusScene : difficulty
+game.difficulty.Difficulty --o scenes.play.PlayScene : difficulty
+game.scoring.Scoring --o scenes.bonus.BonusScene : scoring
+game.scoring.Scoring --o scenes.gameover.GameOverScene : scoring
+@enduml
